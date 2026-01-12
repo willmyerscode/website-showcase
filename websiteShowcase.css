@@ -1,0 +1,485 @@
+/**
+ * Website Showcase Plugin for Squarespace
+ * Copyright Will-Myers.com
+ **/
+
+/* Custom Property Reference
+ * 
+ * Overlay Styling:
+ * --overlay-bg: var(--headingLargeColor);
+ * --overlay-opacity: 0.86;
+ * --overlay-text-color: var(--sectionBackgroundColor);
+ * --overlay-text-size: 1rem;
+ * --overlay-text-weight: 600;
+ * --overlay-text-transform: uppercase;
+ * --overlay-text-letter-spacing: 0.1em;
+ * --overlay-transition: 0.3s ease;
+ * 
+ * Popup Styling:
+ * --popup-width: 90vw;
+ * --popup-height: 85vh;
+ * --popup-max-width: 1400px;
+ * --popup-border-radius: 12px;
+ * --popup-bg: var(--siteBackgroundColor);
+ * --popup-header-bg: var(--siteBackgroundColor);
+ * --popup-header-height: 50px;
+ * --popup-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+ * --popup-backdrop-bg: rgba(0, 0, 0, 0.8);
+ * --popup-close-color: #333333;
+ * --popup-close-hover-color: #000000;
+ * --popup-button-size: 32px;
+ * --popup-close-icon-size: 22px;
+ * --popup-external-icon-size: 18px;
+ * --popup-animation-duration: 0.3s;
+ * 
+ * Mobile Styling:
+ * --popup-width-mobile: 92vw;
+ * --popup-height-mobile: 70vh;
+ * --popup-border-radius-mobile: 12px;
+ * --overlay-text-size-mobile: 0.875rem;
+ * 
+ * Info Layout (layout: 'info'):
+ * --popup-max-width-info: 1600px;
+ * --popup-info-width: 300px;
+ * --popup-info-padding: 2rem;
+ * --popup-info-bg: var(--popup-bg);  (defaults to popup background)
+ * --popup-info-title-size: (from list section customTitleFontSize);
+ * --popup-info-title-weight: 600;
+ * --popup-info-title-color: var(--headingLargeColor);
+ * --popup-info-description-size: (from list section customBodyFontSize);
+ * --popup-info-description-color: var(--paragraphMediumColor);
+ * --popup-info-button-padding-x: 1.5rem;
+ * --popup-info-button-padding-y: 0.75rem;
+ * --popup-info-button-bg: transparent;
+ * --popup-info-button-color: var(--headingLargeColor);
+ * --popup-info-button-border-width: 1px;
+ * --popup-info-button-border-color: var(--headingLargeColor);
+ * --popup-info-button-radius: 0;
+ * --popup-info-button-size: 0.875rem;
+ * --popup-info-button-weight: 500;
+ * --popup-info-button-letter-spacing: 0.05em;
+ * --popup-info-button-text-transform: none;
+ * --popup-info-button-hover-bg: var(--headingLargeColor);
+ * --popup-info-button-hover-color: var(--sectionBackgroundColor);
+ * --popup-info-button-hover-border-color: var(--headingLargeColor);
+ * --popup-iframe-inset: 20px;        (adds padding around iframe)
+ * --popup-iframe-border-radius: 0;   (border radius on inset iframe)
+ * 
+ * Section Elements:
+ * --item-button-display: none;     (set to 'block' to show)
+ */
+
+/* ================================
+   OVERLAY STYLES
+   ================================ */
+
+/* Hide list item buttons by default */
+[data-wm-plugin="website-showcase"] .list-item-content__button-wrapper {
+  display: var(--item-button-display, none) !important;
+}
+
+/* Hide list item description when using info layout (shown in popup instead) */
+[data-wm-plugin="website-showcase"][data-wm-layout="info"] .list-item-content__description {
+  display: none !important;
+}
+
+/* Ensure the media wrapper has proper positioning context */
+[data-wm-plugin="website-showcase"] .wm-showcase-media {
+  position: relative !important;
+  cursor: pointer;
+}
+
+[data-wm-plugin="website-showcase"] .wm-showcase-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay-bg, var(--headingLargeColor, #000000));
+  opacity: 0;
+  transition: opacity var(--overlay-transition, 0.3s ease);
+  z-index: 100;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Hover on the media wrapper shows the overlay */
+[data-wm-plugin="website-showcase"] .wm-showcase-media:hover .wm-showcase-overlay {
+  opacity: var(--overlay-opacity, 0.86);
+}
+
+[data-wm-plugin="website-showcase"] .wm-showcase-overlay-text {
+  color: var(--overlay-text-color, var(--sectionBackgroundColor, #ffffff));
+  font-size: var(--overlay-text-size, 1rem);
+  font-weight: var(--overlay-text-weight, 600);
+  text-transform: var(--overlay-text-transform, uppercase);
+  letter-spacing: var(--overlay-text-letter-spacing, 0.1em);
+  pointer-events: none;
+}
+
+/* ================================
+   POPUP STYLES
+   ================================ */
+
+.wm-showcase-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--popup-animation-duration, 0.3s) ease,
+              visibility var(--popup-animation-duration, 0.3s) ease;
+}
+
+.wm-showcase-popup--visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.wm-showcase-popup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--popup-backdrop-bg, rgba(0, 0, 0, 0.8));
+  cursor: pointer;
+}
+
+.wm-showcase-popup-container {
+  position: relative;
+  width: var(--popup-width, 90vw);
+  max-width: var(--popup-max-width, 1400px);
+  height: var(--popup-height, 85vh);
+  background: var(--popup-bg, var(--siteBackgroundColor, #ffffff));
+  border-radius: var(--popup-border-radius, 12px);
+  box-shadow: var(--popup-shadow, 0 25px 80px rgba(0, 0, 0, 0.4));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.95) translateY(20px);
+  transition: transform var(--popup-animation-duration, 0.3s) ease;
+  border: none;
+  outline: none;
+}
+
+.wm-showcase-popup--visible .wm-showcase-popup-container {
+  transform: scale(1) translateY(0);
+}
+
+.wm-showcase-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  height: var(--popup-header-height, 50px);
+  min-height: var(--popup-header-height, 50px);
+  background: var(--popup-header-bg, var(--siteBackgroundColor, #f5f5f5));
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.wm-showcase-popup-external {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--popup-button-size, 32px);
+  height: var(--popup-button-size, 32px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--popup-close-color, #333333);
+  transition: background 0.2s ease, color 0.2s ease;
+  text-decoration: none;
+}
+
+.wm-showcase-popup-external:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--popup-close-hover-color, #000000);
+}
+
+.wm-showcase-popup-external svg {
+  width: var(--popup-external-icon-size, 18px);
+  height: var(--popup-external-icon-size, 18px);
+}
+
+.wm-showcase-popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--popup-button-size, 32px);
+  height: var(--popup-button-size, 32px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--popup-close-color, #333333);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.wm-showcase-popup-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--popup-close-hover-color, #000000);
+}
+
+.wm-showcase-popup-close svg {
+  width: var(--popup-close-icon-size, 22px);
+  height: var(--popup-close-icon-size, 22px);
+}
+
+.wm-showcase-popup-body {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+}
+
+.wm-showcase-popup-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.wm-showcase-popup-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--popup-bg, var(--siteBackgroundColor, #ffffff));
+  z-index: 1;
+}
+
+.wm-showcase-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--popup-close-color, #333333);
+  border-radius: 50%;
+  animation: wm-showcase-spin 0.8s linear infinite;
+}
+
+@keyframes wm-showcase-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wm-showcase-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: #ffffff;
+}
+
+/* ================================
+   INFO LAYOUT STYLES
+   ================================ */
+
+.wm-showcase-popup--info .wm-showcase-popup-container {
+  max-width: var(--popup-max-width-info, 1600px);
+}
+
+.wm-showcase-popup--info .wm-showcase-popup-main {
+  flex: 1 1 70%;
+}
+
+.wm-showcase-popup-info {
+  flex: 0 0 var(--popup-info-width, 300px);
+  padding: var(--popup-info-padding, 2rem);
+  background: var(--popup-info-bg, var(--popup-bg, var(--siteBackgroundColor, #ffffff)));
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.wm-showcase-popup-info-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+/* Left position - buttons on left side */
+.wm-showcase-popup--info-left .wm-showcase-popup-info-buttons {
+  justify-content: flex-start;
+}
+
+.wm-showcase-popup-info-title {
+  margin: 0;
+  font-size: var(--popup-info-title-size, 1.2rem);
+  font-weight: var(--popup-info-title-weight, 600);
+  color: var(--popup-info-title-color, var(--headingLargeColor, #111111));
+  line-height: 1.3;
+}
+
+.wm-showcase-popup-info-description {
+  margin: 0;
+  font-size: var(--popup-info-description-size, 0.9rem);
+  color: var(--popup-info-description-color, var(--paragraphMediumColor, #555555));
+  line-height: 1.6;
+}
+
+.wm-showcase-popup-info-button {
+  display: inline-block;
+  margin-top: auto;
+  padding: var(--popup-info-button-padding-y, 0.75rem) var(--popup-info-button-padding-x, 1.5rem);
+  background: var(--popup-info-button-bg, transparent);
+  color: var(--popup-info-button-color, var(--headingLargeColor, #111111));
+  text-decoration: none;
+  border: var(--popup-info-button-border-width, 1px) solid var(--popup-info-button-border-color, var(--headingLargeColor, #111111));
+  border-radius: var(--popup-info-button-radius, 0);
+  font-size: var(--popup-info-button-size, 0.875rem);
+  font-weight: var(--popup-info-button-weight, 500);
+  letter-spacing: var(--popup-info-button-letter-spacing, 0.05em);
+  text-transform: var(--popup-info-button-text-transform, none);
+  text-align: center;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  width: fit-content;
+}
+
+.wm-showcase-popup-info-button:hover {
+  background: var(--popup-info-button-hover-bg, var(--headingLargeColor, #111111));
+  color: var(--popup-info-button-hover-color, var(--sectionBackgroundColor, #ffffff));
+  border-color: var(--popup-info-button-hover-border-color, var(--headingLargeColor, #111111));
+}
+
+/* Info panel on left */
+.wm-showcase-popup--info-left .wm-showcase-popup-body {
+  flex-direction: row-reverse;
+}
+
+
+/* Info layout - hide header on desktop */
+.wm-showcase-popup--info .wm-showcase-popup-header {
+  display: none;
+}
+
+.wm-showcase-popup--info .wm-showcase-popup-container {
+  background: transparent;
+}
+
+.wm-showcase-popup--info .wm-showcase-popup-body {
+  flex: 1;
+  background: var(--popup-bg, var(--siteBackgroundColor, #ffffff));
+  border-radius: var(--popup-border-radius, 12px);
+  overflow: hidden;
+}
+
+.wm-showcase-popup--info .wm-showcase-popup-main {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  padding: var(--popup-iframe-inset, 20px);
+}
+
+.wm-showcase-popup--info .wm-showcase-iframe {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--popup-iframe-border-radius, 0);
+}
+
+.wm-showcase-popup--info .wm-showcase-popup-loader {
+  inset: var(--popup-iframe-inset, 20px);
+}
+
+/* ================================
+   MOBILE RESPONSIVE
+   ================================ */
+
+@media (max-width: 767px) {
+  .wm-showcase-popup-container {
+    width: var(--popup-width-mobile, 92vw);
+    height: var(--popup-height-mobile, 70vh);
+    max-width: none;
+    border-radius: var(--popup-border-radius-mobile, 12px);
+  }
+
+  [data-wm-plugin="website-showcase"] .wm-showcase-overlay-text {
+    font-size: var(--overlay-text-size-mobile, 0.875rem);
+  }
+
+  /* Info layout on mobile - stack vertically */
+  .wm-showcase-popup--info .wm-showcase-popup-container {
+    background: var(--popup-bg, var(--siteBackgroundColor, #ffffff));
+    overflow: hidden;
+  }
+
+  .wm-showcase-popup--info .wm-showcase-popup-body {
+    flex-direction: column;
+    position: relative;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .wm-showcase-popup--info .wm-showcase-popup-main {
+    flex: 1 1 60%;
+    border-radius: 0;
+  }
+
+  .wm-showcase-popup-info {
+    flex: 0 0 auto;
+    max-height: 40%;
+    padding: 1rem;
+  }
+
+  /* Show header on mobile for info layout, styled to blend */
+  .wm-showcase-popup--info .wm-showcase-popup-header {
+    display: flex;
+    background: transparent;
+    border-bottom: none;
+    height: auto;
+    min-height: auto;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Hide buttons in info panel on mobile */
+  .wm-showcase-popup-info-buttons {
+    display: none;
+  }
+
+  .wm-showcase-popup--info-left .wm-showcase-popup-main {
+    border-radius: 0;
+  }
+
+  .wm-showcase-popup-info-title {
+    font-size: 1.125rem;
+  }
+
+  .wm-showcase-popup-info-description {
+    font-size: 0.875rem;
+  }
+
+  /* Info panel above iframe on mobile */
+  .wm-showcase-popup--info-mobile-above .wm-showcase-popup-body {
+    flex-direction: column-reverse;
+  }
+
+
+  .wm-showcase-popup--info-mobile-above .wm-showcase-popup-info-buttons {
+    justify-content: flex-end;
+  }
+}
+
+/* ================================
+   EDIT MODE STYLES
+   ================================ */
+
+body.sqs-edit-mode-active [data-wm-plugin="website-showcase"] .wm-showcase-overlay {
+  pointer-events: none;
+}
+

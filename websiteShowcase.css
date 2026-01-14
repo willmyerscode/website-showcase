@@ -8,7 +8,7 @@
  * Overlay Styling:
  * --overlay-bg: var(--headingLargeColor);
  * --overlay-opacity: 0.86;
- * --overlay-text-color: var(--sectionBackgroundColor);
+ * --overlay-text-color: var(--siteBackgroundColor);
  * --overlay-text-size: 1rem;
  * --overlay-text-weight: 600;
  * --overlay-text-transform: uppercase;
@@ -25,8 +25,8 @@
  * --popup-header-height: 50px;
  * --popup-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
  * --popup-backdrop-bg: rgba(0, 0, 0, 0.8);
- * --popup-close-color: #333333;
- * --popup-close-hover-color: #000000;
+ * --popup-close-color: var(--paragraphMediumColor);
+ * --popup-close-hover-color: var(--headingLargeColor);
  * --popup-button-size: 32px;
  * --popup-close-icon-size: 22px;
  * --popup-external-icon-size: 18px;
@@ -35,6 +35,7 @@
  * Mobile Styling:
  * --popup-width-mobile: 92vw;
  * --popup-height-mobile: 70vh;
+ * --popup-height-mobile-info: 85vh;   (taller popup for info layout)
  * --popup-border-radius-mobile: 12px;
  * --overlay-text-size-mobile: 0.875rem;
  * 
@@ -48,22 +49,9 @@
  * --popup-info-title-color: var(--headingLargeColor);
  * --popup-info-description-size: (from list section customBodyFontSize);
  * --popup-info-description-color: var(--paragraphMediumColor);
- * --popup-info-button-padding-x: 1.5rem;
- * --popup-info-button-padding-y: 0.75rem;
- * --popup-info-button-bg: transparent;
- * --popup-info-button-color: var(--headingLargeColor);
- * --popup-info-button-border-width: 1px;
- * --popup-info-button-border-color: var(--headingLargeColor);
- * --popup-info-button-radius: 0;
- * --popup-info-button-size: 0.875rem;
- * --popup-info-button-weight: 500;
- * --popup-info-button-letter-spacing: 0.05em;
- * --popup-info-button-text-transform: none;
- * --popup-info-button-hover-bg: var(--headingLargeColor);
- * --popup-info-button-hover-color: var(--sectionBackgroundColor);
- * --popup-info-button-hover-border-color: var(--headingLargeColor);
  * --popup-iframe-inset: 20px;        (adds padding around iframe)
  * --popup-iframe-border-radius: 0;   (border radius on inset iframe)
+ * (button uses sqs-button-element--primary for Squarespace styling)
  * 
  * Section Elements:
  * --item-button-display: none;     (set to 'block' to show)
@@ -112,7 +100,7 @@
 }
 
 [data-wm-plugin="website-showcase"] .wm-showcase-overlay-text {
-  color: var(--overlay-text-color, var(--sectionBackgroundColor, #ffffff));
+  color: var(--overlay-text-color, var(--siteBackgroundColor, #ffffff));
   font-size: var(--overlay-text-size, 1rem);
   font-weight: var(--overlay-text-weight, 600);
   text-transform: var(--overlay-text-transform, uppercase);
@@ -193,14 +181,14 @@
   background: transparent;
   cursor: pointer;
   border-radius: 6px;
-  color: var(--popup-close-color, #333333);
+  color: var(--popup-close-color, var(--paragraphMediumColor, #333333));
   transition: background 0.2s ease, color 0.2s ease;
   text-decoration: none;
 }
 
 .wm-showcase-popup-external:hover {
   background: rgba(0, 0, 0, 0.1);
-  color: var(--popup-close-hover-color, #000000);
+  color: var(--popup-close-hover-color, var(--headingLargeColor, #000000));
 }
 
 .wm-showcase-popup-external svg {
@@ -219,13 +207,13 @@
   background: transparent;
   cursor: pointer;
   border-radius: 6px;
-  color: var(--popup-close-color, #333333);
+  color: var(--popup-close-color, var(--paragraphMediumColor, #333333));
   transition: background 0.2s ease, color 0.2s ease;
 }
 
 .wm-showcase-popup-close:hover {
   background: rgba(0, 0, 0, 0.1);
-  color: var(--popup-close-hover-color, #000000);
+  color: var(--popup-close-hover-color, var(--headingLargeColor, #000000));
 }
 
 .wm-showcase-popup-close svg {
@@ -251,8 +239,10 @@
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1.5rem;
   background: var(--popup-bg, var(--siteBackgroundColor, #ffffff));
   z-index: 1;
 }
@@ -261,9 +251,24 @@
   width: 40px;
   height: 40px;
   border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: var(--popup-close-color, #333333);
+  border-top-color: var(--popup-close-color, var(--paragraphMediumColor, #333333));
   border-radius: 50%;
   animation: wm-showcase-spin 0.8s linear infinite;
+}
+
+.wm-showcase-popup-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  color: var(--paragraphMediumColor, #555555);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  background: var(--popup-bg, var(--siteBackgroundColor, #ffffff));
+  z-index: 0;
 }
 
 @keyframes wm-showcase-spin {
@@ -333,27 +338,8 @@
 }
 
 .wm-showcase-popup-info-button {
-  display: inline-block;
   margin-top: auto;
-  padding: var(--popup-info-button-padding-y, 0.75rem) var(--popup-info-button-padding-x, 1.5rem);
-  background: var(--popup-info-button-bg, transparent);
-  color: var(--popup-info-button-color, var(--headingLargeColor, #111111));
-  text-decoration: none;
-  border: var(--popup-info-button-border-width, 1px) solid var(--popup-info-button-border-color, var(--headingLargeColor, #111111));
-  border-radius: var(--popup-info-button-radius, 0);
-  font-size: var(--popup-info-button-size, 0.875rem);
-  font-weight: var(--popup-info-button-weight, 500);
-  letter-spacing: var(--popup-info-button-letter-spacing, 0.05em);
-  text-transform: var(--popup-info-button-text-transform, none);
-  text-align: center;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   width: fit-content;
-}
-
-.wm-showcase-popup-info-button:hover {
-  background: var(--popup-info-button-hover-bg, var(--headingLargeColor, #111111));
-  color: var(--popup-info-button-hover-color, var(--sectionBackgroundColor, #ffffff));
-  border-color: var(--popup-info-button-hover-border-color, var(--headingLargeColor, #111111));
 }
 
 /* Info panel on left */
@@ -417,6 +403,7 @@
   .wm-showcase-popup--info .wm-showcase-popup-container {
     background: var(--popup-bg, var(--siteBackgroundColor, #ffffff));
     overflow: hidden;
+    height: var(--popup-height-mobile-info, 85vh);
   }
 
   .wm-showcase-popup--info .wm-showcase-popup-body {
@@ -427,13 +414,22 @@
   }
 
   .wm-showcase-popup--info .wm-showcase-popup-main {
-    flex: 1 1 60%;
+    flex: 1 1 70%;
     border-radius: 0;
+    padding: 0;
+  }
+
+  .wm-showcase-popup--info .wm-showcase-iframe {
+    border-radius: 0;
+  }
+
+  .wm-showcase-popup--info .wm-showcase-popup-loader {
+    inset: 0;
   }
 
   .wm-showcase-popup-info {
     flex: 0 0 auto;
-    max-height: 40%;
+    max-height: 30%;
     padding: 1rem;
   }
 
@@ -482,4 +478,6 @@
 body.sqs-edit-mode-active [data-wm-plugin="website-showcase"] .wm-showcase-overlay {
   pointer-events: none;
 }
+
+
 

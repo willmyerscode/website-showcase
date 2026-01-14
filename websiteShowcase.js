@@ -164,7 +164,7 @@ class WMWebsiteShowcase {
         </div>
         <h2 class="wm-showcase-popup-info-title">${this.escapeHtml(title)}</h2>
         ${description ? `<div class="wm-showcase-popup-info-description">${description}</div>` : ''}
-        <a class="wm-showcase-popup-info-button" href="${this.escapeHtml(absoluteUrl)}" target="_blank" rel="noopener noreferrer">
+        <a class="wm-showcase-popup-info-button sqs-button-element--primary" href="${this.escapeHtml(absoluteUrl)}" target="_blank" rel="noopener noreferrer">
           ${this.escapeHtml(buttonText)}
         </a>
       </div>
@@ -177,10 +177,16 @@ class WMWebsiteShowcase {
       </div>
     `;
 
+    // Get section theme for color inheritance
+    const sectionTheme = this.el.dataset.sectionTheme;
+
     // Create popup elements
     this.popup = document.createElement('div');
     this.popup.className = `wm-showcase-popup ${layoutClass}`;
     this.popup.setAttribute('data-wm-plugin', this.pluginName);
+    if (sectionTheme) {
+      this.popup.setAttribute('data-section-theme', sectionTheme);
+    }
     this.popup.innerHTML = `
       <div class="wm-showcase-popup-backdrop"></div>
       <div class="wm-showcase-popup-container">
@@ -189,6 +195,9 @@ class WMWebsiteShowcase {
           <div class="wm-showcase-popup-main">
             <div class="wm-showcase-popup-loader">
               <div class="wm-showcase-spinner"></div>
+            </div>
+            <div class="wm-showcase-popup-error">
+              Unable to load website, disable Clickjack Protection in the Squarespace Settings of the embedded site.
             </div>
             <iframe 
               class="wm-showcase-iframe" 
@@ -205,7 +214,8 @@ class WMWebsiteShowcase {
       </div>
     `;
 
-    document.body.appendChild(this.popup);
+    const siteWrapper = document.querySelector('#siteWrapper') || document.body;
+    siteWrapper.appendChild(this.popup);
     document.body.style.overflow = 'hidden';
 
     // Apply list section font sizes to popup
@@ -225,10 +235,33 @@ class WMWebsiteShowcase {
     backdrop.addEventListener('click', () => this.closePopup());
     document.addEventListener('keydown', this.boundHandleKeydown);
 
-    // Hide loader when iframe fires load event
+    // Track load timing - error pages load almost instantly
+    const loadStartTime = Date.now();
+    
+    // Hide loader when iframe loads successfully
     iframe.addEventListener('load', () => {
       const loader = this.popup?.querySelector('.wm-showcase-popup-loader');
+      const errorEl = this.popup?.querySelector('.wm-showcase-popup-error');
+      if (!loader) return;
+      
+      const loadTime = Date.now() - loadStartTime;
+      
+      // If page loaded in under 200ms, it's likely a browser error page (blocked by X-Frame-Options)
+      // Real websites take longer to load
+      if (loadTime < 200) {
+        loader.style.display = 'none';
+        if (errorEl) errorEl.style.zIndex = '2';
+      } else {
+        loader.style.display = 'none';
+      }
+    });
+
+    // Handle iframe error
+    iframe.addEventListener('error', () => {
+      const loader = this.popup?.querySelector('.wm-showcase-popup-loader');
+      const errorEl = this.popup?.querySelector('.wm-showcase-popup-error');
       if (loader) loader.style.display = 'none';
+      if (errorEl) errorEl.style.zIndex = '2';
     });
 
     // Trigger animation
@@ -372,4 +405,6 @@ class WMWebsiteShowcase {
     });
   }
 })();
+
+
 

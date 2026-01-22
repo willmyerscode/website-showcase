@@ -196,9 +196,6 @@ class WMWebsiteShowcase {
             <div class="wm-showcase-popup-loader">
               <div class="wm-showcase-spinner"></div>
             </div>
-            <div class="wm-showcase-popup-error">
-              Unable to load website, disable Clickjack Protection in the Squarespace Settings of the embedded site.
-            </div>
             <iframe 
               class="wm-showcase-iframe" 
               src="${this.escapeHtml(absoluteUrl)}" 
@@ -235,33 +232,10 @@ class WMWebsiteShowcase {
     backdrop.addEventListener('click', () => this.closePopup());
     document.addEventListener('keydown', this.boundHandleKeydown);
 
-    // Track load timing - error pages load almost instantly
-    const loadStartTime = Date.now();
-    
-    // Hide loader when iframe loads successfully
+    // Hide loader when iframe loads
     iframe.addEventListener('load', () => {
       const loader = this.popup?.querySelector('.wm-showcase-popup-loader');
-      const errorEl = this.popup?.querySelector('.wm-showcase-popup-error');
-      if (!loader) return;
-      
-      const loadTime = Date.now() - loadStartTime;
-      
-      // If page loaded in under 200ms, it's likely a browser error page (blocked by X-Frame-Options)
-      // Real websites take longer to load
-      if (loadTime < 200) {
-        loader.style.display = 'none';
-        if (errorEl) errorEl.style.zIndex = '2';
-      } else {
-        loader.style.display = 'none';
-      }
-    });
-
-    // Handle iframe error
-    iframe.addEventListener('error', () => {
-      const loader = this.popup?.querySelector('.wm-showcase-popup-loader');
-      const errorEl = this.popup?.querySelector('.wm-showcase-popup-error');
       if (loader) loader.style.display = 'none';
-      if (errorEl) errorEl.style.zIndex = '2';
     });
 
     // Trigger animation
